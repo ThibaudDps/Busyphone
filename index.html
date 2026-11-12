@@ -37,11 +37,6 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
 .tab{width:76px;height:52px;border:0;background:none;color:var(--ink);display:grid;place-items:center;opacity:.35;transition:opacity .5s ease,transform .4s ease}
 .tab.on{opacity:.85;transform:scale(1.08)}
 .tab svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.6}
-#gate{position:fixed;left:12px;top:calc(env(safe-area-inset-top,0px) + 12px);width:40px;height:40px;border-radius:50%;
-  box-shadow:inset 0 0 0 2px var(--ink);opacity:.22;z-index:30;display:grid;place-items:center;transition:opacity .4s ease}
-#gate::after{content:"";width:100%;height:100%;border-radius:50%;background:var(--ink);transform:scale(0)}
-#gate.hold{opacity:.5}
-#gate.hold::after{transform:scale(1);transition:transform 1.5s linear}
 .blob{position:absolute;border-radius:50%;pointer-events:none;mix-blend-mode:var(--blend);opacity:0;
   transform:translate(-50%,-50%) scale(.3);animation:grow var(--d,2.4s) ease-out forwards}
 @keyframes grow{25%{opacity:1}to{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}
@@ -119,16 +114,16 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
 #card button{flex:1;border:1px solid var(--line);background:var(--tile);color:var(--ink);border-radius:6px;padding:12px 8px;font:inherit}
 #card button.main{background:var(--b3);border-color:transparent;color:#2b2833}
 /* Ouverture en fondu */
-#app,#tabs,#gate{animation:appin 1.8s ease}
+#app,#tabs,#clock{animation:appin 1.8s ease}
 @keyframes appin{from{opacity:0}}
 
 /* Chrono tout en haut : petits chiffres, un appui pour les cacher / les montrer */
-#clock{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translateX(-50%);z-index:12;display:none;
+#clock{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translateX(-50%);z-index:25;display:flex;
   align-items:center;justify-content:center;min-width:92px;height:40px;padding:0 14px;box-sizing:border-box;border-radius:20px;
   font:500 15px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.08em;
   color:var(--ink);opacity:.55;touch-action:manipulation;transition:opacity .5s ease}
-#clock.on{display:flex}
 #clock.hid{opacity:.3;font-size:20px}
+#clock.hold{opacity:.9}
 
 /* Pop-up de départ : même style que l'espace parent */
 #plan{position:fixed;inset:0;z-index:35;display:none;place-items:center;background:rgba(20,18,24,.4)}
@@ -138,6 +133,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
 @keyframes planout{to{opacity:0}}
 #plancard{background:var(--card);border-radius:8px;padding:20px;width:min(86vw,340px);display:grid;gap:10px;font-size:16px}
 #plancard h2{margin:0 0 2px;font-size:18px;font-weight:600}
+#plancard p{margin:2px 0 0;text-align:center;font-size:13px;opacity:.6}
 #plancard button{flex:1;border:1px solid var(--line);background:var(--tile);color:var(--ink);border-radius:6px;padding:12px 8px;font:inherit}
 @media (prefers-reduced-motion:reduce){.blob,#rest i{animation-duration:.01s}}
 </style>
@@ -180,12 +176,12 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
     <svg viewBox="0 0 28 28"><rect x="3.5" y="5" width="3.5" height="18" rx="1.5"/><rect x="9.5" y="7.5" width="3.5" height="13" rx="1.5"/><rect x="15.5" y="10" width="3.5" height="8" rx="1.5"/><rect x="21.5" y="12" width="3.5" height="4" rx="1.5"/></svg>
   </button>
 </div>
-<div id="gate"></div>
 <div id="clock" aria-label="Temps restant"></div>
 <div id="plan"><div id="plancard">
   <h2>Déterminer le temps de jeu</h2>
   <div class="row pbtns"><button data-m="10">10 min</button><button data-m="15">15 min</button><button data-m="20">20 min</button></div>
   <div class="row"><button id="nolimit">Sans chrono</button></div>
+  <p>Pour modifier les options, appuyer de manière prolongée sur le timer ou le point en haut de l'écran.</p>
 </div></div>
 <div id="rest"><div id="bye"><p>À bientôt Alba</p><i></i><button id="quit">Quitter l'application</button></div></div>
 <div id="panel"><div id="card">
@@ -419,14 +415,19 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
   var rest=$("#rest"),stage=$("#stage"),status=$("#status");
   function setEnd(v){endAt=v;store("bb_end",String(v));tick()}
   var clock=$("#clock"),clockHid=load("bb_clockhid")==="1",clockTxt="";
-  clock.classList.toggle("hid",clockHid);
   function clockUpdate(rem){
-    if(!endAt||rem<=0){clock.classList.remove("on");return}
-    clock.classList.add("on");
-    var t;if(clockHid)t="\u2022";else{var s=Math.ceil(rem/1000);t=Math.floor(s/60)+":"+("0"+(s%60)).slice(-2)}
+    var dot=!endAt||rem<=0||clockHid,t;   /* pas de chrono, fin, ou caché : simple point */
+    if(dot)t="\u2022";else{var s=Math.ceil(rem/1000);t=Math.floor(s/60)+":"+("0"+(s%60)).slice(-2)}
+    clock.classList.toggle("hid",dot);
     if(t!==clockTxt){clockTxt=t;clock.textContent=t}
   }
-  clock.addEventListener("click",function(){clockHid=!clockHid;store("bb_clockhid",clockHid?"1":"0");clock.classList.toggle("hid",clockHid);clockTxt="";tick()});
+  var clockT=null,clockLong=false;   /* appui long 0,8 s sur le chrono (ou sur son point) : ouvre l'espace parent */
+  clock.addEventListener("pointerdown",function(){
+    clockLong=false;clock.classList.add("hold");clearTimeout(clockT);
+    clockT=setTimeout(function(){clockLong=true;clock.classList.remove("hold");panel.classList.add("on")},800);
+  });
+  ["pointerup","pointercancel","pointerleave"].forEach(function(n){clock.addEventListener(n,function(){clearTimeout(clockT);clock.classList.remove("hold")})});
+  clock.addEventListener("click",function(){if(clockLong){clockLong=false;return}if(!endAt)return;clockHid=!clockHid;store("bb_clockhid",clockHid?"1":"0");clockTxt="";tick()});
   function tick(){
     var now=Date.now(),rem=endAt-now;
     applyTheme();
@@ -439,12 +440,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
     status.textContent="Chrono : "+Math.ceil(rem/60000)+" min restantes";
   }
 
-  /* Porte parent : rond en haut à gauche, appui long 1,5 s */
-  var gate=$("#gate"),gt=null,panel=$("#panel");
-  function holdStart(e){e.preventDefault();gate.classList.add("hold");gt=setTimeout(function(){gate.classList.remove("hold");panel.classList.add("on")},1500)}
-  function holdEnd(){gate.classList.remove("hold");clearTimeout(gt)}
-  gate.addEventListener("pointerdown",holdStart);
-  ["pointerup","pointercancel","pointerleave"].forEach(function(n){gate.addEventListener(n,holdEnd)});
+  var panel=$("#panel");
 
   document.querySelectorAll("[data-d]").forEach(function(b){b.addEventListener("click",function(){setEnd(Date.now()+b.dataset.d*60000)})});
   $("#plus").addEventListener("click",function(){setEnd(Math.max(Date.now(),endAt)+5*60000)});
