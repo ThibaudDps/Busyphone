@@ -55,13 +55,13 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
 .cell{display:grid;place-items:center;position:relative;z-index:1}
 .sp{--sp:cubic-bezier(.2,.8,.3,1)}
 /* Écran xylophone : 6 lames, une par couleur et par note */
-#xk{position:absolute;left:10px;right:10px;top:50%;height:66%;transform:translateY(-52%);display:flex;gap:7px;align-items:center}
-#xk::before,#xk::after{content:"";position:absolute;left:-6px;right:-6px;height:7px;border-radius:4px;background:var(--edge)}
-#xk::before{top:24%}#xk::after{bottom:24%}
-.xk{flex:1;height:var(--h);border-radius:13px;background:var(--c);box-shadow:0 7px 0 var(--edge);position:relative;z-index:1;
+#xk{position:absolute;left:14px;right:14px;top:60px;bottom:88px;display:flex;flex-direction:column;gap:12px;align-items:center}
+#xk::before,#xk::after{content:"";position:absolute;top:-8px;bottom:-8px;width:7px;border-radius:4px;background:var(--edge)}
+#xk::before{left:22%}#xk::after{right:22%}
+.xk{flex:1;min-height:0;width:var(--h);border-radius:13px;background:var(--c);box-shadow:0 7px 0 var(--edge);position:relative;z-index:1;
   transition:transform .22s var(--sp),box-shadow .22s var(--sp)}
-.xk::before,.xk::after{content:"";position:absolute;left:50%;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:rgba(255,255,255,.6)}
-.xk::before{top:18px}.xk::after{bottom:18px}
+.xk::before,.xk::after{content:"";position:absolute;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:rgba(255,255,255,.6)}
+.xk::before{left:22px}.xk::after{right:22px}
 .xk.hit{transform:translateY(7px);box-shadow:0 0 0 var(--edge)}
 .kc{width:108px;height:108px;border-radius:16px;background:var(--sw);box-shadow:0 8px 0 var(--edge);
   transition:transform .22s var(--sp),box-shadow .22s var(--sp),background .25s ease;margin-bottom:8px}
@@ -137,14 +137,14 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
       </div>
     </div>
     <div class="screen sp" id="xylo"><div id="xk">
+      <div class="xk" data-n="7" style="--c:var(--p2);--h:58%"></div>
+      <div class="xk" data-n="6" style="--c:var(--p1);--h:64%"></div>
+      <div class="xk" data-n="5" style="--c:var(--p5);--h:70%"></div>
+      <div class="xk" data-n="4" style="--c:var(--p4);--h:76%"></div>
+      <div class="xk" data-n="3" style="--c:var(--p3);--h:82%"></div>
+      <div class="xk" data-n="2" style="--c:var(--p6);--h:88%"></div>
+      <div class="xk" data-n="1" style="--c:var(--p2);--h:94%"></div>
       <div class="xk" data-n="0" style="--c:var(--p1);--h:100%"></div>
-      <div class="xk" data-n="1" style="--c:var(--p2);--h:93%"></div>
-      <div class="xk" data-n="2" style="--c:var(--p6);--h:86%"></div>
-      <div class="xk" data-n="3" style="--c:var(--p3);--h:79%"></div>
-      <div class="xk" data-n="4" style="--c:var(--p4);--h:72%"></div>
-      <div class="xk" data-n="5" style="--c:var(--p5);--h:65%"></div>
-      <div class="xk" data-n="6" style="--c:var(--p1);--h:58%"></div>
-      <div class="xk" data-n="7" style="--c:var(--p2);--h:51%"></div>
     </div></div>
   </div>
 </div>
