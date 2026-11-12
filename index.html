@@ -118,6 +118,27 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
 #vol::-moz-range-thumb{box-sizing:border-box;width:28px;height:28px;border-radius:50%;background:var(--b3);border:3px solid var(--card)}
 #card button{flex:1;border:1px solid var(--line);background:var(--tile);color:var(--ink);border-radius:6px;padding:12px 8px;font:inherit}
 #card button.main{background:var(--b3);border-color:transparent;color:#2b2833}
+/* Ouverture en fondu */
+#app,#tabs,#gate{animation:appin 1.8s ease}
+@keyframes appin{from{opacity:0}}
+
+/* Chrono tout en haut : petits chiffres, un appui pour les cacher / les montrer */
+#clock{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translateX(-50%);z-index:12;display:none;
+  align-items:center;justify-content:center;min-width:92px;height:40px;padding:0 14px;box-sizing:border-box;border-radius:20px;
+  font:500 15px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.08em;
+  color:var(--ink);opacity:.55;touch-action:manipulation;transition:opacity .5s ease}
+#clock.on{display:flex}
+#clock.hid{opacity:.3;font-size:20px}
+
+/* Pop-up de départ : même style que l'espace parent */
+#plan{position:fixed;inset:0;z-index:35;display:none;place-items:center;background:rgba(20,18,24,.4)}
+#plan.on{display:grid;animation:planin .9s ease}
+#plan.out{animation:planout .5s ease forwards;pointer-events:none}
+@keyframes planin{from{opacity:0}}
+@keyframes planout{to{opacity:0}}
+#plancard{background:var(--card);border-radius:8px;padding:20px;width:min(86vw,340px);display:grid;gap:10px;font-size:16px}
+#plancard h2{margin:0 0 2px;font-size:18px;font-weight:600}
+#plancard button{flex:1;border:1px solid var(--line);background:var(--tile);color:var(--ink);border-radius:6px;padding:12px 8px;font:inherit}
 @media (prefers-reduced-motion:reduce){.blob,#rest i{animation-duration:.01s}}
 </style>
 </head>
@@ -160,6 +181,12 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
   </button>
 </div>
 <div id="gate"></div>
+<div id="clock" aria-label="Temps restant"></div>
+<div id="plan"><div id="plancard">
+  <h2>Déterminer le temps de jeu</h2>
+  <div class="row pbtns"><button data-m="10">10 min</button><button data-m="15">15 min</button><button data-m="20">20 min</button></div>
+  <div class="row"><button id="nolimit">Sans chrono</button></div>
+</div></div>
 <div id="rest"><div id="bye"><p>À bientôt Alba</p><i></i><button id="quit">Quitter l'application</button></div></div>
 <div id="panel"><div id="card">
   <h2>Espace parent</h2>
@@ -183,6 +210,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
   soundOn=vol>0;
   function volFactor(){return 2*Math.pow(vol/100,2)}   /* 70 % ≈ niveau d'origine, 100 % = 2 fois plus fort */
   endAt=parseInt(load("bb_end")||"0",10)||0;
+  if(endAt&&endAt<=Date.now()){endAt=0;store("bb_end","0")}
   themeMode=load("bb_theme")||"auto";
 
   /* Thème jour / soir */
@@ -390,9 +418,19 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
   /* Chrono : heure de fin mémorisée */
   var rest=$("#rest"),stage=$("#stage"),status=$("#status");
   function setEnd(v){endAt=v;store("bb_end",String(v));tick()}
+  var clock=$("#clock"),clockHid=load("bb_clockhid")==="1",clockTxt="";
+  clock.classList.toggle("hid",clockHid);
+  function clockUpdate(rem){
+    if(!endAt||rem<=0){clock.classList.remove("on");return}
+    clock.classList.add("on");
+    var t;if(clockHid)t="\u2022";else{var s=Math.ceil(rem/1000);t=Math.floor(s/60)+":"+("0"+(s%60)).slice(-2)}
+    if(t!==clockTxt){clockTxt=t;clock.textContent=t}
+  }
+  clock.addEventListener("click",function(){clockHid=!clockHid;store("bb_clockhid",clockHid?"1":"0");clock.classList.toggle("hid",clockHid);clockTxt="";tick()});
   function tick(){
     var now=Date.now(),rem=endAt-now;
     applyTheme();
+    clockUpdate(endAt?rem:0);
     if(!endAt){rest.classList.remove("on");stage.style.opacity=1;if(master)master.gain.value=1;status.textContent="Chrono inactif";return}
     if(rem<=0){rest.classList.add("on");status.textContent="Temps écoulé";return}
     rest.classList.remove("on");
@@ -427,8 +465,13 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);overflow:hi
   }
   $("#quit").addEventListener("click",quitApp);
 
-  applyTheme();size();setInterval(tick,500);tick();
+  applyTheme();size();setInterval(tick,250);tick();
   window.addEventListener("resize",size);
+  var plan=$("#plan");
+  function planClose(){plan.classList.add("out");setTimeout(function(){plan.classList.remove("on","out")},520)}
+  document.querySelectorAll(".pbtns button").forEach(function(b){b.addEventListener("click",function(){setEnd(Date.now()+b.dataset.m*60000);planClose()})});
+  $("#nolimit").addEventListener("click",planClose);
+  if(!endAt)setTimeout(function(){plan.classList.add("on")},1700);   /* apparaît après le fondu d'ouverture */
   setTimeout(intro,400);
   if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
   document.addEventListener("contextmenu",function(e){e.preventDefault()});
